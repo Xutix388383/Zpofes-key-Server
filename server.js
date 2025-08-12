@@ -5,7 +5,7 @@ const app = express();
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
-const keys = JSON.parse(fs.readFileSync('./Keys.json', 'utf8'));
+const keys = JSON.parse(fs.readFileSync('./keys.json', 'utf8'));
 
 app.get('/', (req, res) => {
   res.send('🔐 Zpofes Key Server is live.');
