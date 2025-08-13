@@ -35,11 +35,12 @@ function sendWebhookLog(message) {
 
 // ✅ Verify key and HWID
 app.post('/verify', (req, res) => {
-  const { key, hwid } = req.body;
+  const { key, hwid, bind } = req.body;
   if (!key || !hwid) return res.status(400).json({ success: false, message: 'Missing key or HWID' });
 
   const keys = loadKeys();
   const stored = keys[key];
+
   if (!stored) {
     sendWebhookLog(`❌ Invalid key attempt: ${key}`);
     return res.status(403).json({ success: false, message: 'Invalid key' });
@@ -50,14 +51,16 @@ app.post('/verify', (req, res) => {
     return res.status(403).json({ success: false, message: 'HWID mismatch' });
   }
 
-  if (!stored.hwid) {
+  if (!stored.hwid && bind === true) {
     stored.hwid = hwid;
     keys[key] = stored;
     saveKeys(keys);
     sendWebhookLog(`✅ HWID bound for key: ${key}`);
+    return res.json({ success: true, message: 'HWID bound and authorized.' });
   }
 
-  res.json({ success: true, message: 'Key verified' });
+  sendWebhookLog(`✅ Key verified: ${key}`);
+  return res.json({ success: true, message: 'Authorized.' });
 });
 
 // 🧬 Generate key and save to file
