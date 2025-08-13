@@ -1,14 +1,16 @@
 const axios = require('axios');
 require('dotenv').config();
 
-const logToDiscord = async (message) => {
+const WEBHOOK_URL = process.env.DISCORD_WEBHOOK;
+
+module.exports.log = async function (message) {
+  if (!WEBHOOK_URL) return;
+
   try {
-    await axios.post(process.env.WEBHOOK_URL, {
+    await axios.post(WEBHOOK_URL, {
       content: message
     });
   } catch (err) {
-    console.error('Discord logging failed:', err.message);
+    console.error('Webhook log failed:', err.message);
   }
 };
-
-module.exports = { logToDiscord };
