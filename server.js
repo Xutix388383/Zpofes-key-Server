@@ -2,7 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const webhookLogger = require('./webhookLogger');
+const { assignRole, revokeRole } = require('./bot/roleManager');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -115,7 +117,7 @@ app.post('/cleanup', (req, res) => {
   const expired = [];
 
   for (const [key, entry] of Object.entries(keys)) {
-    if (entry.temp && entry.createdAt && now - entry.createdAt > 3600000) { // 1 hour
+    if (entry.temp && entry.createdAt && now - entry.createdAt > 3600000) {
       delete keys[key];
       expired.push(key);
     }
@@ -142,6 +144,30 @@ app.get('/list', (req, res) => {
   res.json({ success: true, keys });
 });
 
+// 🎭 Assign Zpofe Buyer role
+app.post('/role', async (req, res) => {
+  const { discordId } = req.body;
+  if (!discordId) return res.status(400).json({ success: false, message: 'Missing Discord ID' });
+
+  const result = await assignRole(discordId);
+  webhookLogger.log(`🎭 Role assignment for <@${discordId}> → ${result.message}`);
+  res.json(result);
+});
+
+// 🚫 Revoke Zpofe Buyer role
+app.post('/revoke', async (req, res) => {
+  const { discordId } = req.body;
+  if (!discordId) return res.status(400).json({ success: false, message: 'Missing Discord ID' });
+
+  const result = await revokeRole(discordId);
+  webhookLogger.log(`🚫 Role revocation for <@${discordId}> → ${result.message}`);
+  res.json(result);
+});
+
+// 🟢 Execution logging on server start
 app.listen(PORT, () => {
+  const bootTime = new Date().toISOString();
   console.log(`Zpofes Key Server running on port ${PORT}`);
+  console.log(`Server booted at ${bootTime}`);
+  webhookLogger.logExecution(os.hostname());
 });
